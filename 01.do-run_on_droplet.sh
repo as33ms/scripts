@@ -91,7 +91,7 @@ echo -n "Running: apt-get install ufw pwgen curl - "
 apt-get -y install ufw pwgen curl >> ./$stamp/apt-get-y-install-ufw-pwgen-curl.log 2>&1 && echo "OK" || echo "Failed"
 
 echo -n "Running: apt-get -u upgrade - "
-apt-get -u upgrade >> ./$stamp/apt-get-u-upgrade.log 2>&1 && echo "OK" || echo "Failed"
+apt-get -u -y upgrade >> ./$stamp/apt-get-u-y-upgrade.log 2>&1 && echo "OK" || echo "Failed"
 
 echo -n "Running: apt-get autoremove - "
 apt-get -y autoremove >> ./$stamp/apt-get-y-autoremove.log 2>&1 && echo "OK" || echo "Failed"
