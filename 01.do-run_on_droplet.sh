@@ -124,7 +124,7 @@ for setting in "${!SSH_SETTINGS[@]}"; do
 done
 
 msg="Check ssh settings and if there is something wrong, fix it yourself. ;). To continue, press enter:"
-press_enter_to_continue $msg
+press_enter_to_continue "$msg"
 
 # install ufw
 echo "Running: apt-get update"
