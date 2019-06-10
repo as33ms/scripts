@@ -77,7 +77,7 @@ mkdir ./$stamp
 
 # backup of /etc
 echo -n "Creating backup - "
-tar -zcvf $backup.tar.gz /etc/ && echo "OK" || echo "Failed"
+tar -zcf $backup.tar.gz /etc/ && echo "OK" || echo "Failed"
 
 # create a user
 echo -n "Adding user $username - "
