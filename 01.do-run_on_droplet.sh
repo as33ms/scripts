@@ -84,7 +84,7 @@ echo -n "Adding user $username - "
 (adduser $username && usermod -aG sudo $username) && echo "OK" || echo "Failed"
 
 # install packages, upgrading system
-echo -n "Running: apt-get update"
+echo -n "Running: apt-get update - "
 apt-get update >> ./$stamp/apt-get-update.log  2>&1 && echo "OK" || echo "Failed" 
 
 echo -n "Running: apt-get install ufw pwgen curl - "
@@ -98,7 +98,7 @@ apt-get -y autoremove >> ./$stamp/apt-get-y-autoremove.log 2>&1 && echo "OK" || 
 
 # ssh settings
 sshd_file=/etc/ssh/sshd_config
-cp $sshd_file ./$stamp/$sshd_file.orig
+cp $sshd_file ./$stamp/sshd_config.orig
 
 echo "Updating ssh"
 for setting in "${!SSH_SETTINGS[@]}"; do
