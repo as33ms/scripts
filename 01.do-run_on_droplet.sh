@@ -81,7 +81,7 @@ tar -zcf $backup.tar.gz /etc/ && echo "OK" || echo "Failed"
 
 # create a user
 echo -n "Adding user $username - "
-(adduser $username && usermod -aG sudo $username) && echo "OK" || echo "Failed"
+(adduser -q $username && usermod -aG sudo $username) && echo "OK" || echo "Failed"
 
 # install packages, upgrading system
 echo -n "Running: apt-get update - "
