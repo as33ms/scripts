@@ -22,18 +22,19 @@ some basic security guidelines. This script will do the following:
 
   1. Backup /etc directory to $backup.tar.gz
   2. Add a user ($username) and include them in sudo group
-  3. Harden ssh
+  3. Install curl, pwgen, ufw, latest updates
+  4. Harden ssh
         Port=${SSH_SETTINGS[Port]}
         LoginGraceTime=${SSH_SETTINGS[LoginGraceTime]}
         PermitRootLogin=${SSH_SETTINGS[PermitRootLogin]}
-  4. Install ufw and apply following rules
+  5. Apply following rules to ubuntu firewall
         ufw default allow outgoing
         ufw default deny incoming
         ufw allow http
         ufw allow https
         ufw allow ${SSH_SETTINGS[Port]}/tcp
         ufw enable
-  5. Install latest updates and REBOOT
+  6. REBOOT
 
 NOTICE
 test -z "$1" || echo "Logs can be found at ./$1"
@@ -91,12 +92,25 @@ press_enter_to_continue
 mkdir ./$stamp
 
 # backup of /etc
-echo Creating backup
-tar -zcvf $backup.tar.gz /etc/
+echo -n "Creating backup - "
+tar -zcvf $backup.tar.gz /etc/ && echo "OK" || echo "Failed"
 
 # create a user
-echo Adding user $username
-adduser $username && usermod -aG sudo $username
+echo -n "Adding user $username - "
+(adduser $username && usermod -aG sudo $username) && echo "OK" || echo "Failed"
+
+# install packages, upgrading system
+echo -n "Running: apt-get update"
+apt-get update >> ./$stamp/apt-get-update.log  2>&1 && echo "OK" || echo "Failed" 
+
+echo -n "Running: apt-get install ufw pwgen curl - "
+apt-get -y install ufw pwgen curl >> ./$stamp/apt-get-y-install-ufw-pwgen-curl.log 2>&1 && echo "OK" || echo "Failed"
+
+echo -n "Running: apt-get -u upgrade - "
+apt-get -u upgrade >> ./$stamp/apt-get-u-upgrade.log 2>&1 && echo "OK" || echo "Failed"
+
+echo -n "Running: apt-get autoremove - "
+apt-get -y autoremove >> ./$stamp/apt-get-y-autoremove.log 2>&1 && echo "OK" || echo "Failed"
 
 # ssh settings
 sshd_file=/etc/ssh/sshd_config
@@ -123,15 +137,8 @@ for setting in "${!SSH_SETTINGS[@]}"; do
     printf "For $setting:\n\tbefore:\t$before\n\tafter:\t$after\n"
 done
 
-msg="Check ssh settings and if there is something wrong, fix it yourself. ;). To continue, press enter:"
+msg="Check ssh settings. If wrong, fix it yourself. To continue, press enter: "
 press_enter_to_continue "$msg"
-
-# install ufw
-echo "Running: apt-get update"
-apt-get update >> ./$stamp/apt-get-update.log  2>&1
-
-echo "Running: apt-get install ufw"
-apt-get install ufw >> ./$stamp/apt-get-install-ufw.log 2>&1
 
 echo "Updating ufw rules"
 ufw default allow outgoing
@@ -141,16 +148,6 @@ test "$allow_http" == "true" && ufw allow http
 test "$allow_https" == "true" && ufw allow https
 ufw enable
 ufw status
-
-# install updates and reboot
-echo "Running: apt-get install -y pwgen curl"
-apt-get -y install pwgen curl >> ./$stamp/apt-get-install-pwgen-curl.log 2>&1
-
-echo "Running: apt-get -u upgrade"
-apt-get -u upgrage >> ./$stamp/apt-get-u-upgrade.log 2>&1
-
-echo "Running: apt-get autoremove -y"
-apt-get autoremove -y >> ./$stamp/apt-get-y-autoremove.log 2>&1
 
 echo "-----------------------------------------------------------------------------"
 echo "Done. If there were any errors, we recommend to restore backup and try again."
