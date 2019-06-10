@@ -36,6 +36,7 @@ some basic security guidelines. This script will do the following:
   5. Install latest updates and REBOOT
 
 NOTICE
+test -z "$1" || echo "Logs can be found at ./$1"
 }
 
 press_enter_to_continue() {
@@ -84,8 +85,10 @@ SSH_SETTINGS["PermitRootLogin"]=no
 stamp=$(date +%Y-%m-%d)
 backup=/root/etc-backup-$stamp
 
-what_it_does
+what_it_does $stamp
 press_enter_to_continue
+
+mkdir ./$stamp
 
 # backup of /etc
 echo Creating backup
@@ -97,7 +100,7 @@ adduser $username && usermod -aG sudo $username
 
 # ssh settings
 sshd_file=/etc/ssh/sshd_config
-cp $sshd_file $sshd_file.orig
+cp $sshd_file ./$stamp/$sshd_file.orig
 
 echo "Updating ssh"
 for setting in "${!SSH_SETTINGS[@]}"; do
@@ -120,12 +123,17 @@ for setting in "${!SSH_SETTINGS[@]}"; do
     printf "For $setting:\n\tbefore:\t$before\n\tafter:\t$after\n"
 done
 
-msg="Please check the ssh settings and if there is something wrong, fix it yourself. ;). To continue, press enter:"
+msg="Check ssh settings and if there is something wrong, fix it yourself. ;). To continue, press enter:"
 press_enter_to_continue $msg
 
 # install ufw
-echo "Install and configure ufw"
-apt-get update && apt-get install ufw
+echo "Running: apt-get update"
+apt-get update >> ./$stamp/apt-get-update.log  2>&1
+
+echo "Running: apt-get install ufw"
+apt-get install ufw >> ./$stamp/apt-get-install-ufw.log 2>&1
+
+echo "Updating ufw rules"
 ufw default allow outgoing
 ufw default deny incoming
 ufw allow ${SSH_SETTINGS[Port]}/tcp
@@ -135,13 +143,17 @@ ufw enable
 ufw status
 
 # install updates and reboot
-echo "Install latest updates, selected packages and reboot"
-apt-get update && apt-get -u upgrade && apt-get -y install pwgen curl
+echo "Running: apt-get install -y pwgen curl"
+apt-get -y install pwgen curl >> ./$stamp/apt-get-install-pwgen-curl.log 2>&1
 
-echo "Removing any unwanted packages"
-apt-get autoremove
+echo "Running: apt-get -u upgrade"
+apt-get -u upgrage >> ./$stamp/apt-get-u-upgrade.log 2>&1
 
-echo "\nDone. If there were any errors, we recommend to restore backup and try again."
+echo "Running: apt-get autoremove -y"
+apt-get autoremove -y >> ./$stamp/apt-get-y-autoremove.log 2>&1
+
+echo "-----------------------------------------------------------------------------"
+echo "Done. If there were any errors, we recommend to restore backup and try again."
 
 press_enter_to_continue "Press enter to reboot: " 
 
