@@ -106,6 +106,13 @@ for setting in "${!SSH_SETTINGS[@]}"; do
     if [ $? -eq 0 ]; then
         value=$(cat $sshd_file | grep "^#$setting" | awk '{print $2}')
         sed -i "s:^#$setting $value:$setting ${SSH_SETTINGS[$setting]}:g" $sshd_file
+    else
+        before=$(cat $sshd_file | grep -n "^$setting")
+
+        if [ $? -eq 0 ]; then
+            value=$(cat $sshd_file | grep "^$setting" | awk '{print $2}')
+            sed -i "s:^$setting $value:$setting ${SSH_SETTINGS[$setting]}:g" $sshd_file
+        fi
     fi
 
     after=$(cat $sshd_file | grep -n "^$setting")
