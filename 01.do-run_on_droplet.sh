@@ -8,10 +8,6 @@ show_help() {
     cat << HELP
 Usage: $(basename $0) -u <username> -p <new ssh port>
 
-Other options:
-    -http   :   Use this flag to allow port 80 traffic through ufw.
-    -https  :   Use this flag to allow port 443 traffic through ufw.
-
 HELP
 }
 
@@ -30,8 +26,6 @@ some basic security guidelines. This script will do the following:
   5. Apply following rules to ubuntu firewall
         ufw default allow outgoing
         ufw default deny incoming
-        ufw allow http
-        ufw allow https
         ufw allow ${SSH_SETTINGS[Port]}/tcp
         ufw enable
   6. REBOOT
@@ -47,8 +41,6 @@ press_enter_to_continue() {
 
 ssh_port=52204
 username=louser
-allow_http=false
-allow_https=false
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -60,14 +52,6 @@ while [ $# -gt 0 ]; do
         -u|--username)
             username=$2
             shift
-            shift
-            ;;
-        -http)
-            allow_http=true
-            shift
-            ;;
-        -https)
-            allow_https=true
             shift
             ;;
         -h|-help|--help)
@@ -144,8 +128,6 @@ echo "Updating ufw rules"
 ufw default allow outgoing
 ufw default deny incoming
 ufw allow ${SSH_SETTINGS[Port]}/tcp
-test "$allow_http" == "true" && ufw allow http
-test "$allow_https" == "true" && ufw allow https
 ufw enable
 ufw status
 
