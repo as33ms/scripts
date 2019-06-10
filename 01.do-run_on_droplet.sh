@@ -17,7 +17,8 @@ HELP
 
 what_it_does() {
     cat << NOTICE
-This script will do the following:
+This script is intended to run on a newly created cloud server and follow
+some basic security guidelines. This script will do the following:
 
   1. Backup /etc directory to $backup.tar.gz
   2. Add a user ($username) and include them in sudo group
@@ -37,7 +38,7 @@ This script will do the following:
 NOTICE
 }
 
-press_any_key_to_continue() {
+press_enter_to_continue() {
     test -z "$1" && msg="Press any key to continue: " || msg="$1"
     read -p "$msg" dummy
 }
@@ -84,7 +85,7 @@ stamp=$(date +%Y-%m-%d)
 backup=/root/etc-backup-$stamp
 
 what_it_does
-press_any_key_to_continue
+press_enter_to_continue
 
 # backup of /etc
 echo Creating backup
@@ -112,6 +113,9 @@ for setting in "${!SSH_SETTINGS[@]}"; do
     printf "For $setting:\n\tbefore:\t$before\n\tafter:\t$after\n"
 done
 
+msg="Please check the ssh settings and if there is something wrong, fix it yourself. ;). To continue, press enter:"
+press_enter_to_continue $msg
+
 # install ufw
 echo "Install and configure ufw"
 apt-get update && apt-get install ufw
@@ -127,8 +131,11 @@ ufw status
 echo "Install latest updates, selected packages and reboot"
 apt-get update && apt-get -u upgrade && apt-get -y install pwgen curl
 
-echo "Done. If there were any errors, we recommend to restore backup and try again."
+echo "Removing any unwanted packages"
+apt-get autoremove
 
-press_any_key_to_continue "Press any key to reboot: " 
+echo "\nDone. If there were any errors, we recommend to restore backup and try again."
+
+press_enter_to_continue "Press enter to reboot: " 
 
 reboot
