@@ -21,6 +21,7 @@ some basic security guidelines. This script will do the following:
   3. Install curl, pwgen, ufw, latest updates
   4. Harden ssh
         Port=${SSH_SETTINGS[Port]}
+        AllowUsers=${SSH_SETTINGS[AllowUsers]}
         LoginGraceTime=${SSH_SETTINGS[LoginGraceTime]}
         PermitRootLogin=${SSH_SETTINGS[PermitRootLogin]}
   5. Apply following rules to ubuntu firewall
@@ -28,7 +29,9 @@ some basic security guidelines. This script will do the following:
         ufw default deny incoming
         ufw allow ${SSH_SETTINGS[Port]}/tcp
         ufw enable
-  6. REBOOT
+  6. Create a settings file for future scripts to read
+  7. Download file for preparing for the next stage
+  8. REBOOT
 
 NOTICE
 test -z "$1" || echo "Logs can be found at ./$1"
@@ -64,6 +67,7 @@ done
 
 declare -A SSH_SETTINGS 
 SSH_SETTINGS["Port"]=$ssh_port
+SSH_SETTINGS["AllowUsers"]=$username
 SSH_SETTINGS["LoginGraceTime"]=1m
 SSH_SETTINGS["PermitRootLogin"]=no
 
@@ -87,8 +91,8 @@ echo -n "Adding user $username - "
 echo -n "Running: apt-get update - "
 apt-get update >> ./$stamp/apt-get-update.log  2>&1 && echo "OK" || echo "Failed" 
 
-echo -n "Running: apt-get install ufw pwgen curl - "
-apt-get -y install ufw pwgen curl >> ./$stamp/apt-get-y-install-ufw-pwgen-curl.log 2>&1 && echo "OK" || echo "Failed"
+echo -n "Running: apt-get install ufw pwgen curl git - "
+apt-get -y install ufw pwgen curl git >> ./$stamp/apt-get-y-install-ufw-pwgen-curl-git.log 2>&1 && echo "OK" || echo "Failed"
 
 echo -n "Running: apt-get -u upgrade - "
 apt-get -u -y upgrade >> ./$stamp/apt-get-u-y-upgrade.log 2>&1 && echo "OK" || echo "Failed"
@@ -131,8 +135,31 @@ ufw allow ${SSH_SETTINGS[Port]}/tcp
 ufw enable
 ufw status
 
+cat > ./$stamp/hardening.conf << HARDENING
+# This file was created by script: $(basename $0), user: $USER
+user=$username
+ssh_port=${SSH_SETTINGS[Port]}
+ssh_allowusers=${SSH_SETTINGS[AllowUsers]}
+ssh_logingracetime=${SSH_SETTINGS[LoginGraceTime]}
+ssh_permitrootlogin=${SSH_SETTINGS[PermitRootLogin]}
+
+declare -A NEXT_COMMANDS
+NEXT_COMMANDS[0]='ssh-keygen'
+NEXT_COMMANDS[1]='git clone git@github.com:ashakunt/scripts.git'
+HARDENING
+
+echo -n "Creating config file in /home/$username/.hardening.conf: "
+cp ./$stamp/hardening.conf /home/$username/.hardening.conf && echo "OK" || echo "Failed"
+
+echo "Downloading 02.do-prepare_next_stage.sh script"
+wget https://raw.githubusercontent.com/ashakunt/scripts/master/02.do-prepare_next_stage.sh
+
+server_ip=$(ifconfig eth0 | grep "inet " | awk {'print $2'})
+
 echo "-----------------------------------------------------------------------------"
 echo "Done. If there were any errors, we recommend to restore backup and try again."
+echo "To login to this server: ssh -p ${SSH_SETTINGS[Port]} $username@$server_ip"
+echo " - on your next login, run: $ 02.do-prepare_next_stage.sh"
 
 press_enter_to_continue "Press enter to reboot: " 
 
