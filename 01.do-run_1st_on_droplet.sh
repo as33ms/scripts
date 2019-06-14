@@ -151,12 +151,17 @@ cp ./$stamp/hardening.conf /home/$username/.hardening.conf && echo "OK" || echo 
 cat > ./$stamp/next-stage.sh << NEXT_STAGE
 #!/bin/bash
 source /home/$username/.hardening.conf
-export -d= -f1 /home/$username/.hardening.conf
+export cut -d= -f1 /home/$username/.hardening.conf
 
 ssh-keygen
+cat /home/$username/.ssh/id_rsa.pub
+
+echo "Copy the above SSH key to your github profile."
+read -p "Once copied, press enter to continue: "
+
 git clone git@github.com:ashakunt/scripts.git /home/$username/scripts
 
-echo "------------------------------------------------------------------------------------"
+echo "------------------------------------------------------------"
 echo "Done. If there were errors, please try again. Next steps:
 echo "    1. $ cd /home/$username/scripts"
 echo "    2. $ ./02.do-run_2nd_on_droplet.sh"
