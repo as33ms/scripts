@@ -94,10 +94,10 @@ echo -n "Copying $ip_sec configuration: "
 sudo cp ./$stamp/$ip_sec /etc/sysctl.d/$ip_sec && echo "OK" || failure_exit "Failed to harden system network"
 
 echo -n "Reloading sysctl configuration: "
-sudo systcl -p && echo "OK" || echo "Failed"
+sudo sysctl -p && echo "OK" || failure_exit "Failed to reload sysctl"
 
 echo -n "Installing fail2ban: "
-sudo apt-get install fail2ban && echo "OK" || failure_exit "Failed to install fail2ban"
+sudo apt-get install -y fail2ban >> ./$stamp/apt-get-install-y-fail2ban.log 2>&1 && echo "OK" || failure_exit "Failed to install fail2ban"
 
 ssh_jail=ssh.conf
 cat > ./$stamp/$ssh_jail << SSH_JAIL
@@ -114,7 +114,7 @@ echo -n "Creating jail for ssh: "
 sudo cp ./$stamp/$ssh_jail /etc/fail2ban/jail.d/ssh.conf && echo "OK" || failure_exit "Failed to create ssh jail [fail2ban]"
 
 echo "Enabling fail2ban"
-sudo systemctl restart fail2ban
+sudo systemctl start fail2ban
 sudo fail2ban-client status
 sudo fail2ban-client status sshd
 
