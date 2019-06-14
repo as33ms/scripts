@@ -137,7 +137,6 @@ ufw enable
 ufw status
 
 cat > ./$stamp/hardening.conf << HARDENING
-# This file was created by script: $(basename $0), user: $USER
 user=$username
 ssh_port=${SSH_SETTINGS[Port]}
 ssh_allowusers=${SSH_SETTINGS[AllowUsers]}
@@ -151,7 +150,7 @@ cp ./$stamp/hardening.conf /home/$username/.hardening.conf && echo "OK" || echo 
 cat > ./$stamp/next-stage.sh << NEXT_STAGE
 #!/bin/bash
 source /home/$username/.hardening.conf
-export $(cut -d= -f1 /home/$username/.hardening.conf)
+export \$(cut -d= -f1 /home/$username/.hardening.conf)
 
 ssh-keygen
 cat /home/$username/.ssh/id_rsa.pub
