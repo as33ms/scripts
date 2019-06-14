@@ -142,24 +142,33 @@ ssh_port=${SSH_SETTINGS[Port]}
 ssh_allowusers=${SSH_SETTINGS[AllowUsers]}
 ssh_logingracetime=${SSH_SETTINGS[LoginGraceTime]}
 ssh_permitrootlogin=${SSH_SETTINGS[PermitRootLogin]}
-
-declare -A NEXT_COMMANDS
-NEXT_COMMANDS[0]='ssh-keygen'
-NEXT_COMMANDS[1]='git clone git@github.com:ashakunt/scripts.git'
 HARDENING
 
 echo -n "Creating config file in /home/$username/.hardening.conf: "
 cp ./$stamp/hardening.conf /home/$username/.hardening.conf && echo "OK" || echo "Failed"
 
-echo "Downloading 02.do-prepare_next_stage.sh script"
-wget https://raw.githubusercontent.com/ashakunt/scripts/master/02.do-prepare_next_stage.sh
+cat > ./$stamp/next-stage.sh << NEXT_STAGE
+#!/bin/bash
+source /home/$username/.hardening.conf
+export -d= -f1 /home/$username/.hardening.conf
+
+ssh-keygen
+git clone git@github.com:ashakunt/scripts.git /home/$username/scripts
+
+echo "------------------------------------------------------------------------------------"
+echo "Done. If there were errors, please try again. Next, run: 02.do-run_2nd_on_droplet.sh"
+NEXT_STAGE
+
+echo -n "Creating script for preparing next stage: "
+(cp ./$stamp/next-stage.sh /home/$username/ && chmod +x /home/$username/next-stage.sh) && echo "OK" || echo "Failed"
 
 server_ip=$(ifconfig eth0 | grep "inet " | awk {'print $2'})
 
 echo "-----------------------------------------------------------------------------"
 echo "Done. If there were any errors, we recommend to restore backup and try again."
-echo "To login to this server: ssh -p ${SSH_SETTINGS[Port]} $username@$server_ip"
-echo " - on your next login, run: $ 02.do-prepare_next_stage.sh"
+echo
+echo "For server login: ssh -p ${SSH_SETTINGS[Port]} $username@$server_ip"
+echo "On next login, run this: $ next-stage.sh"
 
 press_enter_to_continue "Press enter to reboot: " 
 
