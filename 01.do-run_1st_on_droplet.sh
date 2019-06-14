@@ -151,11 +151,13 @@ cp ./$stamp/hardening.conf /home/$username/.hardening.conf && echo "OK" || echo 
 cat > ./$stamp/next-stage.sh << NEXT_STAGE
 #!/bin/bash
 source /home/$username/.hardening.conf
-export cut -d= -f1 /home/$username/.hardening.conf
+export $(cut -d= -f1 /home/$username/.hardening.conf)
 
 ssh-keygen
 cat /home/$username/.ssh/id_rsa.pub
 
+echo
+echo "------------------------------------------------------------"
 echo "Copy the above SSH key to your github profile."
 read -p "Once copied, press enter to continue: "
 
