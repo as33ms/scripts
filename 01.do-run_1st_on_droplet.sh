@@ -78,6 +78,7 @@ what_it_does $stamp
 press_enter_to_continue
 
 mkdir ./$stamp
+export DEBIAN_FRONTEND=noninteractive
 
 # backup of /etc
 echo -n "Creating backup - "
