@@ -131,6 +131,31 @@ done
 msg="Check ssh settings. If wrong, fix it yourself. To continue, press enter: "
 press_enter_to_continue "$msg"
 
+# if PasswordAuthentication was set to no, then copy authorized_keys file to $username's home dir
+echo "Checking ssh for PasswordAuthentication"
+check=$(cat $sshd_file | grep -n ^PasswordAuthentication)
+if [ $? -eq 0 ]; then
+
+    auth_check=$(cat $sshd_file | grep -n ^AuthorizedKeysFile)
+
+    if [ $? -eq 0 ]; then
+        auth_check_file=$(cat $sshd_file | grep -n ^AuthorizedKeysFile | awk '{print $2}')
+    else
+        auth_check_file=/home/$username/.ssh/authorized_keys
+        #^ use the default file
+    fi
+
+    pa_value=$(cat $sshd_file | grep -n ^PasswordAuthentication | awk '{print $2}')
+
+    if [ "$pa_value" = "no" ]; then
+        mkdir -p /home/$username/.ssh
+        cp $HOME/.ssh/authorized_keys /home/$username/.ssh/authorized_keys
+        chown -R $username:$username /home/$username/.ssh
+        chmod 700 /home/$username/.ssh
+        chmod 600 /home/$username/.ssh/authorized_keys
+    fi
+fi
+
 echo "Updating ufw rules"
 ufw default allow outgoing
 ufw default deny incoming
