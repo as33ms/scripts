@@ -81,24 +81,24 @@ mkdir ./$stamp
 export DEBIAN_FRONTEND=noninteractive
 
 # backup of /etc
-echo -n "Creating backup - "
+printf "Creating backup - "
 tar -zcf $backup.tar.gz /etc/ && echo "OK" || echo "Failed"
 
 # create a user
-echo -n "Adding user $username - "
+printf "Adding user $username - \n"
 (adduser -q $username && usermod -aG sudo $username) && echo "OK" || echo "Failed"
 
 # install packages, upgrading system
-echo -n "Running: apt-get update - "
+printf "Running: apt-get update - "
 apt-get update >> ./$stamp/apt-get-update.log  2>&1 && echo "OK" || echo "Failed" 
 
-echo -n "Running: apt-get install ufw pwgen curl git - "
+printf "Running: apt-get install ufw pwgen curl git - "
 apt-get -y install ufw pwgen curl git >> ./$stamp/apt-get-y-install-ufw-pwgen-curl-git.log 2>&1 && echo "OK" || echo "Failed"
 
-echo -n "Running: apt-get -u upgrade - "
+printf "Running: apt-get -u upgrade - "
 apt-get -u -y upgrade >> ./$stamp/apt-get-u-y-upgrade.log 2>&1 && echo "OK" || echo "Failed"
 
-echo -n "Running: apt-get autoremove - "
+printf "Running: apt-get autoremove - "
 apt-get -y autoremove >> ./$stamp/apt-get-y-autoremove.log 2>&1 && echo "OK" || echo "Failed"
 
 # ssh settings
