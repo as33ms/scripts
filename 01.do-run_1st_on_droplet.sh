@@ -136,27 +136,37 @@ echo "Checking ssh for PasswordAuthentication"
 check=$(cat $sshd_file | grep -n ^PasswordAuthentication)
 if [ $? -eq 0 ]; then
 
+    pa_value=$(cat $sshd_file | grep -n ^PasswordAuthentication | awk '{print $2}')
+
     auth_check=$(cat $sshd_file | grep -n ^AuthorizedKeysFile)
+
+    echo " >> PasswordAuthentication: $pa_value"
 
     if [ $? -eq 0 ]; then
         auth_check_file=$(cat $sshd_file | grep -n ^AuthorizedKeysFile | awk '{print $2}')
+        echo " >> AuthorizedKeysFile: $auth_check_file"
     else
-        auth_check_file=/home/$username/.ssh/authorized_keys
+        auth_check_file=.ssh/authorized_keys
+        echo " >> AuthorizedKeysFile: $auth_check_file (using default)"
         #^ use the default file
     fi
-
-    pa_value=$(cat $sshd_file | grep -n ^PasswordAuthentication | awk '{print $2}')
 
     if [ "$pa_value" = "no" ]; then
         mkdir -p /home/$username/.ssh
 
-        cp $HOME/.ssh/$auth_check_file /home/$username/.ssh/$auth_check_file
+        cp $HOME/$auth_check_file /home/$username/$auth_check_file
 
         chown -R $username:$username /home/$username/.ssh
 
         chmod 700 /home/$username/.ssh
-        chmod 600 /home/$username/.ssh/$auth_check_file
+        chmod 600 /home/$username/$auth_check_file
+
+        echo " >> Copied $HOME/$auth_check_file  to /home/$username/$auth_check_file"
+    else
+        echo " >> No need for explicitly copying $auth_check_file"
     fi
+else
+    echo " >> PasswordAuthentication: $pa_value [skipping]"
 fi
 
 echo "Updating ufw rules"
