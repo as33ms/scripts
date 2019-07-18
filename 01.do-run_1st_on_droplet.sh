@@ -138,9 +138,9 @@ if [ $? -eq 0 ]; then
 
     pa_value=$(cat $sshd_file | grep -n ^PasswordAuthentication | awk '{print $2}')
 
-    auth_check=$(cat $sshd_file | grep -n ^AuthorizedKeysFile)
-
     echo " >> PasswordAuthentication: $pa_value"
+
+    auth_check=$(cat $sshd_file | grep -n ^AuthorizedKeysFile)
 
     if [ $? -eq 0 ]; then
         auth_check_file=$(cat $sshd_file | grep -n ^AuthorizedKeysFile | awk '{print $2}')
