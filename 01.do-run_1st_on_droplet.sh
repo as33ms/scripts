@@ -149,10 +149,13 @@ if [ $? -eq 0 ]; then
 
     if [ "$pa_value" = "no" ]; then
         mkdir -p /home/$username/.ssh
-        cp $HOME/.ssh/authorized_keys /home/$username/.ssh/authorized_keys
+
+        cp $HOME/.ssh/$auth_check_file /home/$username/.ssh/$auth_check_file
+
         chown -R $username:$username /home/$username/.ssh
+
         chmod 700 /home/$username/.ssh
-        chmod 600 /home/$username/.ssh/authorized_keys
+        chmod 600 /home/$username/.ssh/$auth_check_file
     fi
 fi
 
