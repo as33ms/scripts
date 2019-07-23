@@ -203,7 +203,7 @@ read -p "Once copied, press enter to continue: "
 git clone git@github.com:ashakunt/scripts.git /home/$username/scripts
 
 echo "------------------------------------------------------------"
-echo "Done. If there were errors, please try again. Next steps:
+echo "Done. If there were errors, please try again. Next steps:   "
 echo "    1. $ cd /home/$username/scripts"
 echo "    2. $ ./02.do-run_2nd_on_droplet.sh"
 
