@@ -120,5 +120,24 @@ sudo fail2ban-client status sshd
 
 echo "----------------------------------------------------------"
 echo "Done. If there were any errors, we recommend to try again."
-echo "Next steps:"
-echo " 1. To install lamp: $ task-install_lamp.sh"
+cat << NEXT_STEPS
+Setup postfix for sending emails:           task-setup_postfix.sh
+
+    Pre-requisites:
+    1. MailGun SMTP credentials for sending email
+        Login to MailGun account and choose the domain you want to
+        send email with. Copy its SMTP credentials or then, create
+        a new SMTP credential for this specific server.
+
+        Save the credentials as key-value pair in mailgun.conf as
+
+        mg_user=<mailgun username>
+        mg_pass=<mailgun password>
+        mg_domain=<mailgun domain>
+
+    $ task-setup_postfix.sh -c /path/to/mailgun.confg
+
+Setup LAMP on this instance:                task-install_lamp.sh
+
+    Pre-requisites:
+NEXT_STEPS
