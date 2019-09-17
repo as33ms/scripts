@@ -71,12 +71,20 @@ sudo debconf-set-selections <<< "postfix postfix/relayhost $op3" && echo "OK" ||
 echo -n "Installing postfix: "
 sudo apt-get install -y postfix >> ./apt-get-install-y-postfix.log 2>&1 && echo "OK" || fexit "Failed to install postfix"
 
-echo -n "Configuring mailgun credentials to: $PF_SASL_FILE"
+echo -n "Configuring mailgun credentials to $PF_SASL_FILE: "
 sasl_content="smtp.mailgun.org    $mg_user@$mg_domain:$mg_pass"
 echo "$sasl_content" | sudo tee -a $PF_SASL_FILE > /dev/null && echo "OK" || fexit "Failed to setup smtp credentials"
 
+echo "Setting up domain mapping"
+echo -n " - for root: "
+echo "root@$HOSTNAME root-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed mapping root"
+
+echo -n " - for $USER: "
+echo "$USER@$HOSTNAME $USER-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || echo "Failed mapping for $USER"
+
 sudo chmod 600  $PF_SASL_FILE
 sudo postmap    $PF_SASL_FILE
+sudo postmap    $PF_GENERIC
 
 sudo tee -a $PF_MAIN_CF > /dev/null <<MAIN_CF
 smtp_sasl_auth_enable = yes
@@ -84,14 +92,9 @@ smtp_sasl_password_maps = hash:$PF_SASL_FILE
 smtp_sasl_security_options = noanonymous
 smtp_sasl_tls_security_options = noanonymous
 smtp_sasl_mechanism_filter = AUTH LOGIN
+smtp_generic_maps = hash:$PF_GENERIC
 MAIN_CF
 
 echo -n "Restarting postfix: "
 sudo systemctl restart postfix && echo "OK" || echo "Failed"
 
-echo "Setting up domain mapping"
-echo -n " - for root: "
-echo "root@$HOSTNAME root-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || echo "Failed"
-
-echo -n " - for $username: "
-echo "$username@$HOSTNAME $username-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || echo "Failed"
