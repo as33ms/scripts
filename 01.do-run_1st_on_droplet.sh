@@ -193,7 +193,6 @@ source /home/$username/.hardening.conf
 export \$(cut -d= -f1 /home/$username/.hardening.conf)
 
 ssh-keygen
-cat /home/$username/.ssh/id_rsa.pub
 
 echo
 echo "------------------------------------------------------------"
