@@ -118,6 +118,12 @@ sudo systemctl start fail2ban
 sudo fail2ban-client status
 sudo fail2ban-client status sshd
 
+cat > ./mailgun.conf << MAILGUN_CONF
+mg_user=
+mg_pass=
+mg_domain=
+MAILGUN_CONF
+
 echo "----------------------------------------------------------"
 echo "Done. If there were any errors, we recommend to try again."
 cat << NEXT_STEPS
@@ -135,7 +141,9 @@ Setup postfix for sending emails:           task-setup_postfix.sh
         mg_pass=<mailgun password>
         mg_domain=<mailgun domain>
 
-    $ task-setup_postfix.sh -c /path/to/mailgun.confg
+    $ task-setup_postfix.sh -c /path/to/mailgun.conf
+
+    [HINT]: Created ./mailgun.conf
 
 Setup LAMP on this instance:                task-install_lamp.sh
 
