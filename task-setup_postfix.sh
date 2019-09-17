@@ -98,3 +98,17 @@ MAIN_CF
 echo -n "Restarting postfix: "
 sudo systemctl restart postfix && echo "OK" || echo "Failed"
 
+cat << NOTICE
+
+To test your new mail relay, you’ll send a message to your personal email
+address from your server. Install mailutils so you can send a test email
+quickly.
+
+$ sudo apt-get -y install mailutils
+
+Then use mailutils to compose and send a message to your personal email
+account from your current user on the server.
+
+$ mail -s "Test mail" your_email_address <<< "A test message using Mailgun"
+
+NOTICE
