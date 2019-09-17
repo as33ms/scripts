@@ -37,7 +37,6 @@ while [ $# -gt 0 ]; do
             shift
             shift
             ;;
-            -h
         -h)
             show_help
             exit 0
