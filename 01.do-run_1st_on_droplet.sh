@@ -197,10 +197,10 @@ cat /home/$username/.ssh/id_rsa.pub
 
 echo
 echo "------------------------------------------------------------"
-echo "Copy the above SSH key to your github profile."
-read -p "Once copied, press enter to continue: "
+echo "If required, copy the above SSH key to your github profile."
+echo "------------------------------------------------------------"
 
-git clone git@github.com:ashakunt/scripts.git /home/$username/scripts
+git clone https://github.com/ashakunt/scripts.git /home/$username/scripts
 
 echo "------------------------------------------------------------"
 echo "Done. If there were errors, please try again. Next steps:   "
