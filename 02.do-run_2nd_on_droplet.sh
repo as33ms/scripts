@@ -48,7 +48,7 @@ echo -n "Installing fail2ban: "
 sudo apt-get install -y fail2ban >> $logdir/apt-get-install-y-fail2ban.log 2>&1 && echo "OK" || fexit "Failed"
 
 echo -n "Creating backup of /etc: "
-tar -zcf $setupdir/backup-post-install-fail2ban.tar.gz /etc/ && echo "OK" || fexit "Failed to create backup"
+sudo tar -zcf $setupdir/backup-post-install-fail2ban.tar.gz /etc/ && echo "OK" || fexit "Failed to create backup"
 
 # adding ssh jail for fail2ban
 f2bdir=/etc/fail2ban
