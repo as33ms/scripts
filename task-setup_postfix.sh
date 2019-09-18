@@ -75,12 +75,18 @@ echo -n "Configuring mailgun credentials to $PF_SASL_FILE: "
 sasl_content="smtp.mailgun.org    $mg_user@$mg_domain:$mg_pass"
 echo "$sasl_content" | sudo tee -a $PF_SASL_FILE > /dev/null && echo "OK" || fexit "Failed to setup smtp credentials"
 
-echo "Setting up domain mapping"
-echo -n " - for root: "
-echo "root@$HOSTNAME root-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed mapping root"
+echo "Setting up domain mapping for email addresses"
+echo -n " - for root@localhost: "
+echo "root@localhost root-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed"
 
-echo -n " - for $USER: "
-echo "$USER@$HOSTNAME $USER-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || echo "Failed mapping for $USER"
+echo -n " - for root@$HOSTNAME: "
+echo "root@$HOSTNAME root-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed"
+
+echo -n " - for $USER@localhost: "
+echo "$USER@localhost $USER-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed"
+
+echo -n " - for $USER@$HOSTNAME: "
+echo "$USER@$HOSTNAME $USER-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed"
 
 sudo chmod 600  $PF_SASL_FILE
 sudo postmap    $PF_SASL_FILE
