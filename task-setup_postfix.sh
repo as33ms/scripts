@@ -1,4 +1,12 @@
 #!/bin/bash
+f=$(basename $0)
+c_file=$HOME/.system-setup.conf
+test -f $c_file && echo "Found config $c_file." || { echo "$f: Missing config file $c_file" && exit 1; }
+
+source $c_file
+export $(cut -d= -f1 $c_file) || { echo "$f: Unable to export config saved by run_1st_on_droplet.sh." && exit 1; }
+
+source $scripts_clonedir/includes.sh
 
 HOSTNAME=$(hostname)
 PF_MAIN_CF=/etc/postfix/main.cf
@@ -22,12 +30,6 @@ Usage: $(basename $0) -c /path/to/mailgun.conf -hn hostname
     -h: Show this help and exit
 
 SHOW_HELP
-}
-
-fexit() {
-    echo "Oops: $@"
-    show_help
-    exit 1
 }
 
 while [ $# -gt 0 ]; do
@@ -69,13 +71,14 @@ op3="string smtp.mailgun.org"
 sudo debconf-set-selections <<< "postfix postfix/relayhost $op3" && echo "OK" || fexit "Can't set relayhost"
 
 echo -n "Installing postfix: "
-sudo apt-get install -y postfix >> ./apt-get-install-y-postfix.log 2>&1 && echo "OK" || fexit "Failed to install postfix"
+sudo apt-get install -y postfix >> $scripts_setupdir/apt-get-install-y-postfix.log 2>&1 && echo "OK" || fexit "Failed to install postfix"
 
 echo -n "Configuring mailgun credentials to $PF_SASL_FILE: "
 sasl_content="smtp.mailgun.org    $mg_user@$mg_domain:$mg_pass"
 echo "$sasl_content" | sudo tee -a $PF_SASL_FILE > /dev/null && echo "OK" || fexit "Failed to setup smtp credentials"
 
 echo "Setting up domain mapping for email addresses"
+
 echo -n " - for root@localhost: "
 echo "root@localhost root-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed"
 
@@ -88,6 +91,15 @@ echo "$USER@localhost $USER-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC >
 echo -n " - for $USER@$HOSTNAME: "
 echo "$USER@$HOSTNAME $USER-at-$HOSTNAME@$mg_domain" | sudo tee -a $PF_GENERIC > /dev/null && echo "OK" || fexit "Failed"
 
+echo "Updating aliases in /etc/aliases"
+
+echo -n " - for root: "
+echo "root:   sysadmin+$HOSTNAME-root@codemenders.com" | sudo tee -a /etc/aliases > /dev/null && echo "OK" || fexit "Failed"
+
+echo -n " - for $USER: "
+echo "$USER:   sysadmin+$HOSTNAME-$USER@codemenders.com" | sudo tee -a /etc/aliases > /dev/null && echo "OK" || fexit "Failed"
+
+sudo newaliases
 sudo chmod 600  $PF_SASL_FILE
 sudo postmap    $PF_SASL_FILE
 sudo postmap    $PF_GENERIC
