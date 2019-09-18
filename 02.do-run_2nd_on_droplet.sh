@@ -1,22 +1,17 @@
 #!/bin/bash
-stamp=$(date +%Y-%m-%d)
-config_file=$HOME/.hardening.conf
+f=$(basename $0)
+c_file=$HOME/.system-setup.conf
+test -f $c_file && echo "Found config $c_file." || { echo "$f: Missing config file $c_file" && exit 1; }
 
-test -f $config_file && echo "Found config file." || failure_exit "Missing config file: $config_file"
+source $c_file
+export $(cut -d= -f1 $c_file) || { echo "$f: Unable to export config saved by run_1st_on_droplet.sh." && exit 1; }
 
-source $config_file
-export $(cut -d= -f1 $config_file) || failure_exit "Unable to export saved config from 01.do-run_1st_on_droplet.sh."
+source $scripts_clonedir/includes.sh
 
 show_help() {
-    :
-}
+    cat << SHOW_HELP
+Usage: $f
 
-failure_exit() {
-    echo "$@" && exit 1
-}
-
-what_it_does() {
-    cat << NOTICE
 This script is intended to run on a newly created cloud server and follow
 some basic security guidelines. This script will do the following:
 
@@ -24,101 +19,67 @@ some basic security guidelines. This script will do the following:
   2. Harden the network using sysctl
   3. Install fail2ban and configure
 
-NOTICE
+SHOW_HELP
 }
 
-mkdir ./$stamp
+logdir=$scripts_setupdir
+setupdir=$scripts_setupdir
+
+test -d $scripts_setupdir || mkdir -p $scripts_setupdir
 
 # secure shared memory
 echo -n "Adding entry for securing shared memory: "
 content="tmpfs  /run/shm    tmpfs   defaults,noexec,nosuid 0 0"
-echo "$content" | sudo tee -a /etc/fstab > /dev/null && echo "OK" || failure_exit "Failed to secure shared memory"
+echo "$content" | sudo tee -a /etc/fstab > /dev/null && echo "OK" || fexit "Failed"
 
 # ip hardening
-ip_sec=50-ip-sec.conf
+ipsec=50-ip-sec.conf
+cp $scripts_clonedir/confs/$ipsec $setupdir/$ipsec
+sed -i "1s/^/# below config added by $USER, script: $f\n/" $setupdir/$ipsec
+echo "# above config added by $USER, script: $f" | tee -a $setupdir/$ipsec > /dev/null
 
-cat > ./$stamp/$ip_sec << IP_SECURING
-
-# below config added by $USER, script: $(basename $0)
-
-# Disable Source Routing
-net.ipv4.conf.all.accept_source_route = 0
-net.ipv6.conf.all.accept_source_route = 0
-net.ipv4.conf.default.accept_source_route = 0
-net.ipv6.conf.default.accept_source_route = 0
-
-# Disable acceptance of all ICMP redirected packets on all interfaces
-net.ipv4.conf.all.accept_redirects = 0
-net.ipv6.conf.all.accept_redirects = 0
-net.ipv4.conf.default.accept_redirects = 0
-net.ipv6.conf.default.accept_redirects = 0
-
-# Disable send IPv4 redirect packets
-net.ipv4.conf.all.send_redirects = 0
-net.ipv4.conf.default.send_redirects = 0
-
-# Set Reverse Path Forwarding to strict mode as defined in RFC 3704
-net.ipv4.conf.all.rp_filter = 1
-net.ipv4.conf.default.rp_filter = 1
-
-# Ignore ICMP broadcast requests
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-
-# Block pings
-net.ipv4.icmp_echo_ignore_all = 1
-
-# Syn flood help
-net.ipv4.tcp_syncookies = 1
-net.ipv4.tcp_max_syn_backlog = 2048
-net.ipv4.tcp_synack_retries = 2
-net.ipv4.tcp_syn_retries = 5
-
-# Log suspicious martian packets
-net.ipv4.conf.all.log_martians = 1
-net.ipv4.conf.default.log_martians=1
-net.ipv4.icmp_ignore_bogus_error_responses = 1
-
-# Disable IPv6 auto config
-net.ipv6.conf.default.accept_ra=0
-net.ipv6.conf.default.autoconf=0
-net.ipv6.conf.all.accept_ra=0
-net.ipv6.conf.all.autoconf=0
-net.ipv6.conf.eth0.accept_ra=0
-net.ipv6.conf.eth0.autoconf=0
-
-# ^above config added by $USER, script: $(basename $0)
-
-IP_SECURING
-
-echo -n "Copying $ip_sec configuration: "
-sudo cp ./$stamp/$ip_sec /etc/sysctl.d/$ip_sec && echo "OK" || failure_exit "Failed to harden system network"
+echo -n "Copying $ipsec to /etc/sysctl.d: "
+sudo cp $setupdir/$ipsec /etc/sysctl.d/$ipsec && echo "OK" || fexit "Failed"
 
 echo -n "Reloading sysctl configuration: "
-sudo sysctl -p && echo "OK" || failure_exit "Failed to reload sysctl"
+sudo sysctl -p && echo "OK" || fexit "Failed"
 
 echo -n "Installing fail2ban: "
-sudo apt-get install -y fail2ban >> ./$stamp/apt-get-install-y-fail2ban.log 2>&1 && echo "OK" || failure_exit "Failed to install fail2ban"
+sudo apt-get install -y fail2ban >> $logdir/apt-get-install-y-fail2ban.log 2>&1 && echo "OK" || fexit "Failed"
 
-ssh_jail=ssh.conf
-cat > ./$stamp/$ssh_jail << SSH_JAIL
-#ssh jail added by $USER (script: $(basename $0))
-[sshd]
-enabled = true
-port    = $ssh_port
-filter  = sshd
-logpath = /var/log/auth.log
-maxretry= 3
-SSH_JAIL
+echo -n "Creating backup of /etc: "
+tar -zcf $setupdir/backup-post-install-fail2ban.tar.gz /etc/ && echo "OK" || fexit "Failed to create backup"
 
-echo -n "Creating jail for ssh: "
-sudo cp ./$stamp/$ssh_jail /etc/fail2ban/jail.d/ssh.conf && echo "OK" || failure_exit "Failed to create ssh jail [fail2ban]"
+# adding ssh jail for fail2ban
+f2bdir=/etc/fail2ban
+ssh_jail=f2b-jail-ssh.conf
+cp $scripts_clonedir/confs/$ssh_jail $setupdir/$ssh_jail
+sed -i "s:_PORT_:$ssh_port:g" $setupdir/$ssh_jail
+sed -i "1s/^/# ssh jail added by $USER, script: $f\n/" $setupdir/$ssh_jail
 
-echo "Enabling fail2ban"
-sudo systemctl start fail2ban
+echo -n "Copying $ssh_jail to $f2bdir/jail.d: "
+sudo cp $setupdir/$ssh_jail $f2bdir/jail.d/$ssh_jail && echo "OK" || fexit "Failed"
+
+# setting default action in fail2ban
+cp $f2bdir/jail.conf $setupdir/jail.conf.orig
+sed -i "s:%(action_)s:%(action_mw)s:g" $setupdir/jail.conf.orig
+
+echo -n "Copying updated jail.conf to $f2bdir: "
+sudo cp $setupdir/jail.conf.orig $f2bdir/jail.conf && echo "OK" || fexit "Failed to update jail.conf"
+
+echo -n "Enabling fail2ban: "
+sudo systemctl start fail2ban && echo "OK" || fexit "Faild to start fail2ban"
+
+echo "Current fail2ban default action:"
+cat $f2bdir/jail.conf | grep "^action = %"
+
+echo "Current status for fail2ban:"
 sudo fail2ban-client status
 sudo fail2ban-client status sshd
 
-cat > ./mailgun.conf << MAILGUN_CONF
+# next steps below:
+
+cat > $setupdir/mailgun.conf << MAILGUN_CONF
 mg_user=
 mg_pass=
 mg_domain=
@@ -141,9 +102,9 @@ Setup postfix for sending emails:           task-setup_postfix.sh
         mg_pass=<mailgun password>
         mg_domain=<mailgun domain>
 
-    $ task-setup_postfix.sh -c /path/to/mailgun.conf
+    $ task-setup_postfix.sh -c $setupdir/mailgun.conf
 
-    [HINT]: Created ./mailgun.conf
+    [HINT]: Remember to add values to mailgun.conf
 
 Setup LAMP on this instance:                task-install_lamp.sh
 
