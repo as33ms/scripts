@@ -176,40 +176,56 @@ ufw allow ${SSH_SETTINGS[Port]}/tcp
 ufw enable
 ufw status
 
-cat > ./$stamp/hardening.conf << HARDENING
+cat > ./$stamp/system-setup.conf << SYSTEM_SETUP
 user=$username
 ssh_port=${SSH_SETTINGS[Port]}
 ssh_allowusers=${SSH_SETTINGS[AllowUsers]}
 ssh_logingracetime=${SSH_SETTINGS[LoginGraceTime]}
 ssh_permitrootlogin=${SSH_SETTINGS[PermitRootLogin]}
-HARDENING
+scripts_logdir=/home/$username/system-setup-logs-$stamp
+SYSTEM_SETUP
 
-echo -n "Creating config file in /home/$username/.hardening.conf: "
-cp ./$stamp/hardening.conf /home/$username/.hardening.conf && echo "OK" || echo "Failed"
+echo -n "Creating config file in /home/$username/.system-setup.conf: "
+cp ./$stamp/system-setup.conf /home/$username/.system-setup.conf && echo "OK" || echo "Failed"
 
-cat > ./$stamp/next-stage.sh << NEXT_STAGE
+cat > ./$stamp/prepare-stage.sh << PREPARE_STAGE
 #!/bin/bash
-source /home/$username/.hardening.conf
-export \$(cut -d= -f1 /home/$username/.hardening.conf)
+source /home/$username/.system-setup.conf
+export \$(cut -d= -f1 /home/$username/.system-setup.conf)
 
+cat << WHAT_IT_DOES
+This script does the following:
+ 1. Generates ssh key using "ssh-keygen"
+ 2. Clones ashakunt/scripts.git from Github
+ 3. Creates log dir for all scripts (or tasks) that
+    are run from the ashakunt/scripts.git repository
+
+ If this script fails at any point, you might want to
+ run that specific command again.
+WHAT_IT_DOES
+
+read -p "Press enter when you are ready: " dummy
+
+echo "--------------Generating ssh key--------------"
 ssh-keygen
+echo "---------------------DONE---------------------"
 
-echo
-echo "------------------------------------------------------------"
-echo "If required, copy the above SSH key to your github profile."
-echo "------------------------------------------------------------"
-
+echo "---------Cloning ashakunt/scripts.git---------"
 git clone https://github.com/ashakunt/scripts.git /home/$username/scripts
+echo "---------------------DONE---------------------"
 
-echo "------------------------------------------------------------"
-echo "Done. If there were errors, please try again. Next steps:   "
+echo "---------------Creating log dir---------------"
+mkdir -p /home/$username/system-setup-logs-$stamp
+echo "---------------------DONE---------------------"
+
+echo "If there were errors, please try again. Immediate next steps:   "
 echo "    1. $ cd /home/$username/scripts"
 echo "    2. $ ./02.do-run_2nd_on_droplet.sh"
 
-NEXT_STAGE
+PREPARE_STAGE
 
 echo -n "Creating script for preparing next stage: "
-(cp ./$stamp/next-stage.sh /home/$username/ && chmod +x /home/$username/next-stage.sh) && echo "OK" || echo "Failed"
+(cp ./$stamp/prepare-stage.sh /home/$username/ && chmod +x /home/$username/prepare-stage.sh) && echo "OK" || echo "Failed"
 
 server_ip=$(ifconfig eth0 | grep "inet " | awk {'print $2'})
 
@@ -217,7 +233,7 @@ echo "--------------------------------------------------------------------------
 echo "Done. If there were any errors, we recommend to restore backup and try again."
 echo
 echo "For server login: ssh -p ${SSH_SETTINGS[Port]} $username@$server_ip"
-echo "On next login, run this: $ next-stage.sh"
+echo "On next login, run this: $ prepare-stage.sh"
 
 press_enter_to_continue "Press enter to reboot: " 
 
