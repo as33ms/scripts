@@ -1,15 +1,8 @@
 #!/bin/bash
-f="includes.sh"
-test "$(basename $0)" = "$f" && { echo "$f: standalone execution not allowed" && exit 1; }
+_f="includes.sh"
+test "$(basename $0)" = "$_f" && { echo "$_f: standalone execution not allowed" && exit 1; }
 
 fexit () {
-    case $1 in
-        -h)
-            show_help
-            shift
-            ;;
-    esac
-
-    echo "$@"
+    test "$1" = "-h" && { shift; printf "Oops: $@\n\n"; show_help; } || { printf "Oops: $@\n"; }
     exit 1
 }
