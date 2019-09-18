@@ -182,7 +182,8 @@ ssh_port=${SSH_SETTINGS[Port]}
 ssh_allowusers=${SSH_SETTINGS[AllowUsers]}
 ssh_logingracetime=${SSH_SETTINGS[LoginGraceTime]}
 ssh_permitrootlogin=${SSH_SETTINGS[PermitRootLogin]}
-scripts_logdir=/home/$username/system-setup-logs-$stamp
+scripts_clonedir=/home/$username/scripts
+scripts_setupdir=/home/$username/system-setup-$stamp
 SYSTEM_SETUP
 
 echo -n "Creating config file in /home/$username/.system-setup.conf: "
@@ -215,7 +216,7 @@ git clone https://github.com/ashakunt/scripts.git /home/$username/scripts
 echo "---------------------DONE---------------------"
 
 echo "---------------Creating log dir---------------"
-mkdir -p /home/$username/system-setup-logs-$stamp
+mkdir -p /home/$username/system-setup-$stamp
 echo "---------------------DONE---------------------"
 
 echo "If there were errors, please try again. Immediate next steps:   "
