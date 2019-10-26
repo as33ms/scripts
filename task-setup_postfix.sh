@@ -8,7 +8,7 @@ export $(cut -d= -f1 $c_file) || { echo "$f: Unable to export config saved by ru
 
 source $scripts_clonedir/includes.sh
 
-HOSTNAME=$(hostname)
+HOSTNAME=$(hostname -f)
 PF_MAIN_CF=/etc/postfix/main.cf
 PF_GENERIC=/etc/postfix/generic
 PF_SASL_FILE=/etc/postfix/sasl_password
