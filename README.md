@@ -22,3 +22,27 @@ Upon completion, the script will prompt you to reboot and after that, root login
 * After reboot and login as `<user>`, run the automatic generated script `prepare-stage.sh` which clones this github repo
 * Next hardening step is to run `02.do-run_2nd_on_droplet.sh` 
 * Followed by `task-*` of your choice. 
+
+## What has happened so far?
+1. Added a user
+1. Disabled root login for user over SSH
+1. Setup SSH to run on a random port (chosen by you or defaults to 52204)
+1. Sets UFW to allow outgoing, deny incoming, allow tcp over SSH port
+1. Secure the shared memory
+1. Harden the network using sysctl
+1. Install fail2ban and configure it to keep checking the SSH traffic
+1. SSH Key has been generated
+
+## Available tasks 
+* Configure sending emails for system notifications using postfix and mailgun
+* TBD: Install LAMP stack
+* TBD: Install LEMP stack
+* TBD: Install independently - `mysql`, `php5.6+`, `apache`, `nginx`
+
+## What more could be done? (depends on usecase and how you want to secure)
+* Fail2ban - update its configuration
+* Apache hardening (w.r.t SSL, Server Signature and prevent information leakage)
+* Disable DNS recursion and remove version information from bind
+* Hardening of PHP
+* DenyHosts
+* 
